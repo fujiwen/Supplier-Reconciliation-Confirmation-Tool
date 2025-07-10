@@ -599,7 +599,7 @@ class ProductClassificationApp:
                     row_idx += 2  # 空一行
                     
                     # 其他餐厅（营业点）标题
-                    summary_sheet.cell(row=row_idx, column=1, value="其他餐厅（营业点）")
+                    summary_sheet.cell(row=row_idx, column=1, value="其他餐厅（非员餐）")
                     summary_sheet.cell(row=row_idx, column=1).font = Font(bold=True)
                     row_idx += 1
                     
@@ -627,7 +627,7 @@ class ProductClassificationApp:
                         row_idx += 1
                     
                     # 其他餐厅（营业点）小计
-                    summary_sheet.cell(row=row_idx, column=1, value="其他餐厅（营业点）小计")
+                    summary_sheet.cell(row=row_idx, column=1, value="其他餐厅（非员餐）小计")
                     summary_sheet.cell(row=row_idx, column=2, value="-" if total_other_untaxed == 0 else total_other_untaxed)
                     summary_sheet.cell(row=row_idx, column=3, value="-" if total_other_tax == 0 else total_other_tax)
                     summary_sheet.cell(row=row_idx, column=4, value="-" if (total_other_untaxed + total_other_tax) == 0 else (total_other_untaxed + total_other_tax))
@@ -985,7 +985,7 @@ class ProductClassificationApp:
                 self.log_message(f"  总金额: {total_amount:.2f}")
             
             # 其他餐厅（营业点）小计
-            self.log_message("\n其他餐厅（营业点）小计:")
+            self.log_message("\n其他餐厅（非员餐）小计:")
             self.log_message(f"未税金额: {total_other_untaxed:.2f}")
             self.log_message(f"税额: {total_other_tax:.2f}")
             self.log_message(f"总金额: {(total_other_untaxed + total_other_tax):.2f}")
