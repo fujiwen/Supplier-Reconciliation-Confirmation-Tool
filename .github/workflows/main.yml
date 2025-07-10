@@ -1,0 +1,39 @@
+name: Build bld_Reconciliation_Tkinter EXE
+ 
+on:
+  push:
+    paths:
+      - '**/*UI.py'  # 匹配所有 Python 文件的更改
+  pull_request:
+    paths:
+      - '**/*UI.py'  # 匹配所有 Python 文件的更改
+
+ 
+jobs:
+  build:
+    runs-on: windows-latest
+ 
+    steps:
+    - uses: actions/checkout@v2
+ 
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+ 
+    - name: Install PyInstaller
+      run: pip install pyinstaller
+
+    - name: Install dependencies
+      run: pip install pandas numpy openpyxl xlrd 
+ 
+    - name: Build EXE
+      run: pyinstaller --noconsole --icon=favicon.ico --onefile Product_Classification_Tool.py
+      env:
+        CC: mingw32-gcc
+ 
+    - name: Upload EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: Supplier_Recon_Confirmation_Tool
+        path: dist/SRCT.exe
