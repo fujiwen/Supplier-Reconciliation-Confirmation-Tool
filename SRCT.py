@@ -514,7 +514,7 @@ class ProductClassificationApp:
                         summary_sheet = wb["汇总"]
                     
                     # 设置页面边距和页眉页脚（单位：厘米）
-                    summary_sheet.page_margins = PageMargins(top=1.5/2.54, left=0.5/2.54, right=0.5/2.54, bottom=0.5/2.54, header=0, footer=0)
+                    summary_sheet.page_margins = PageMargins(top=0.5/2.54, left=1.5/2.54, right=0.5/2.54, bottom=0.5/2.54, header=0, footer=0)
                     summary_sheet.page_setup.horizontalCentered = True
                     
                     # 设置汇总sheet的标题
