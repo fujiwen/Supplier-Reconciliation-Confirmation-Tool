@@ -19,18 +19,66 @@ def num_to_chinese(num):
     """
     将数字转换为中文大写金额
     """
+    # 特殊情况处理
+    if num == 0:
+        return '零圆整'
+    
     num = float(num)
     integer_part = int(num)
     decimal_part = int(round((num - integer_part) * 100))
     
     chinese_nums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖']
-    units = ['', '拾', '佰', '仟', '万', '拾', '佰', '仟', '亿', '拾', '佰', '仟']
+    position_units = ['', '拾', '佰', '仟']  # 个位不添加单位，后面单独处理
+    section_units = ['', '万', '亿', '兆', '京', '垓']
     
     # 处理整数部分
     chinese_str = ''
-    str_integer = str(integer_part)
-    for i, digit in enumerate(str_integer[::-1]):
-        chinese_str = chinese_nums[int(digit)] + units[i] + chinese_str if int(digit) != 0 else chinese_str
+    
+    # 特殊情况：整数部分为0
+    if integer_part == 0:
+        chinese_str = '零圆'
+    else:
+        # 将整数部分转换为字符串
+        str_integer = str(integer_part)
+        
+        # 按4位分段，从低位到高位
+        sections = []
+        for i in range(0, len(str_integer), 4):
+            start = max(0, len(str_integer) - i - 4)
+            end = len(str_integer) - i
+            sections.append(str_integer[start:end])
+        
+        # 处理每个分段
+        for section_index, section in enumerate(sections):
+            section_chinese = ''
+            has_value = False  # 标记这一段是否有非零值
+            
+            # 处理每一段内的数字，从高位到低位
+            for i, digit in enumerate(section):
+                position = len(section) - i - 1  # 位置（个、十、百、千）
+                digit_int = int(digit)
+                
+                if digit_int != 0:
+                    # 添加数字和单位
+                    section_chinese += chinese_nums[digit_int] + position_units[position]
+                    has_value = True
+                elif has_value:  # 如果之前有非零值，且当前是零
+                    # 避免多个连续的零
+                    if not section_chinese.endswith('零'):
+                        section_chinese += '零'
+            
+            # 处理末尾的零
+            if section_chinese.endswith('零'):
+                section_chinese = section_chinese[:-1]
+            
+            # 如果这一段有内容，添加万、亿等单位
+            if section_chinese != '':
+                if section_index < len(section_units):
+                    section_chinese += section_units[section_index]
+                chinese_str = section_chinese + chinese_str
+        
+        # 在整数部分的最后添加"圆"字（即个位数后面）
+        chinese_str += '圆'
     
     # 处理小数部分
     if decimal_part > 0:
@@ -42,7 +90,12 @@ def num_to_chinese(num):
         if fen > 0:
             chinese_str += chinese_nums[fen] + '分'
     else:
+        # 只有在没有小数部分时才添加"整"字
         chinese_str += '整'
+    
+    # 确保结果不为空
+    if not chinese_str:
+        chinese_str = '零圆整'
     
     return chinese_str
 
@@ -469,7 +522,7 @@ class ProductClassificationApp:
                     summary_sheet.cell(row=1, column=1).font = Font(bold=True, size=16)
                     summary_sheet.cell(row=1, column=1).alignment = Alignment(horizontal='center', vertical='center')
                     # 合并标题单元格
-                    summary_sheet.merge_cells('A1:D1')
+                    summary_sheet.merge_cells('A1:F1')
                     
                     # 读取config.txt文件获取酒店信息
                     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.txt")
@@ -516,29 +569,66 @@ class ProductClassificationApp:
                     
                     # 合并第2-7行的B-D列
                     for row in range(2, 8):
-                        summary_sheet.merge_cells(start_row=row, start_column=2, end_row=row, end_column=4)
+                        summary_sheet.merge_cells(start_row=row, start_column=2, end_row=row, end_column=6)
+                        # 移除背景色
+                        for col in range(1, 7):
+                            cell = summary_sheet.cell(row=row, column=col)
+                            cell.fill = PatternFill(fill_type=None)
                     
                     # 合并第9-13行的B-D列
                     for row in range(9, 14):
-                        summary_sheet.merge_cells(start_row=row, start_column=2, end_row=row, end_column=4)
+                        summary_sheet.merge_cells(start_row=row, start_column=2, end_row=row, end_column=6)
+                        # 移除背景色
+                        for col in range(1, 7):
+                            cell = summary_sheet.cell(row=row, column=col)
+                            cell.fill = PatternFill(fill_type=None)
                     
-                    # 将原来在第3行的表头移动到第14行(2+11+1)
+                    # 创建新的表格结构，与图片中的表格结构一致
+                    # 表头第一行
+                    summary_sheet.cell(row=14, column=1, value="")
+                    summary_sheet.merge_cells(start_row=14, start_column=1, end_row=15, end_column=1)
+                    
+                    summary_sheet.cell(row=14, column=2, value="员餐")
+                    summary_sheet.merge_cells(start_row=14, start_column=2, end_row=14, end_column=3)
+                    
+                    summary_sheet.cell(row=14, column=4, value="其他餐饮点 - 非员餐")
+                    summary_sheet.merge_cells(start_row=14, start_column=4, end_row=14, end_column=5)
+                    
+                    summary_sheet.cell(row=14, column=6, value="当月总应付账款金额")
+                    summary_sheet.merge_cells(start_row=14, start_column=6, end_row=15, end_column=6)
+                    
+                    # 表头第二行
+                    summary_sheet.cell(row=15, column=2, value="不含税金额")
+                    summary_sheet.cell(row=15, column=3, value="税费")
+                    summary_sheet.cell(row=15, column=4, value="不含税金额")
+                    summary_sheet.cell(row=15, column=5, value="税费")
+                    
+                    # 设置品类列标题
                     summary_sheet.cell(row=14, column=1, value="品类")
-                    summary_sheet.cell(row=14, column=2, value="未税金额")
-                    summary_sheet.cell(row=14, column=3, value="税额")
-                    summary_sheet.cell(row=14, column=4, value="总金额")
+
                     
                     # 设置表头样式
                     header_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
-                    for col in range(1, 5):
-                        cell = summary_sheet.cell(row=14, column=col)
-                        cell.font = Font(bold=True)
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
-                        cell.fill = header_fill
+                    for row in range(14, 16):  # 修改为只包含第14-15行
+                        for col in range(1, 7):
+                            cell = summary_sheet.cell(row=row, column=col)
+                            cell.font = Font(bold=True)
+                            cell.alignment = Alignment(horizontal='center', vertical='center')
+                            cell.fill = header_fill
+                            
+                            # 添加边框
+                            from openpyxl.styles import Border, Side
+                            thin_border = Border(
+                                left=Side(style='thin'),
+                                right=Side(style='thin'),
+                                top=Side(style='thin'),
+                                bottom=Side(style='thin')
+                            )
+                            cell.border = thin_border
                     
                     # 按用户要求的顺序显示所有分类
                     ordered_categories = ["干货", "海鲜", "酒类", "饮料", "水", "其他"]
-                    row_idx = 15
+                    row_idx = 16  # 从第16行开始填充数据（表头占据14-15行）
                     
                     # 定义员工餐厅和其他餐厅（营业点）
                     employee_restaurants = ["员工餐厅", "员工食堂"]
@@ -549,114 +639,77 @@ class ProductClassificationApp:
                     total_other_untaxed = 0
                     total_other_tax = 0
                     
-                    # 员工餐厅标题
-                    summary_sheet.cell(row=row_idx, column=1, value="员工餐厅")
-                    summary_sheet.cell(row=row_idx, column=1).font = Font(bold=True)
-                    row_idx += 1
-                    
-                    # 员工餐厅分类汇总
+                    # 直接填充各分类数据到新表格结构
                     for category in ordered_categories:
                         # 筛选该分类的员工餐厅数据
-                        category_df = df[(df[classification_column] == category) & 
+                        employee_df = df[(df[classification_column] == category) & 
                                          (df["部门"].isin(employee_restaurants))]
                         
-                        # 计算未税金额和税额
-                        untaxed_amount = category_df["小计金额(结算)"].sum() if not category_df.empty else 0
-                        tax_amount = category_df["税额(结算)"].sum() if not category_df.empty else 0
-                        total_amount = untaxed_amount + tax_amount
+                        # 计算员工餐厅未税金额和税额
+                        employee_untaxed = employee_df["小计金额(结算)"].sum() if not employee_df.empty else 0
+                        employee_tax = employee_df["税额(结算)"].sum() if not employee_df.empty else 0
                         
                         # 更新员工餐厅总计
-                        total_employee_untaxed += untaxed_amount
-                        total_employee_tax += tax_amount
+                        total_employee_untaxed += employee_untaxed
+                        total_employee_tax += employee_tax
+                        
+                        # 筛选该分类的其他餐厅（非员餐）数据
+                        other_df = df[(df[classification_column] == category) & 
+                                      (~df["部门"].isin(employee_restaurants))]
+                        
+                        # 计算其他餐厅未税金额和税额
+                        other_untaxed = other_df["小计金额(结算)"].sum() if not other_df.empty else 0
+                        other_tax = other_df["税额(结算)"].sum() if not other_df.empty else 0
+                        
+                        # 更新其他餐厅总计
+                        total_other_untaxed += other_untaxed
+                        total_other_tax += other_tax
+                        
+                        # 计算当月总应付账款金额
+                        total_row_amount = employee_untaxed + employee_tax + other_untaxed + other_tax
                         
                         # 写入汇总数据
                         summary_sheet.cell(row=row_idx, column=1, value=category)
-                        summary_sheet.cell(row=row_idx, column=2, value="-" if untaxed_amount == 0 else untaxed_amount)
-                        summary_sheet.cell(row=row_idx, column=3, value="-" if tax_amount == 0 else tax_amount)
-                        summary_sheet.cell(row=row_idx, column=4, value="-" if total_amount == 0 else total_amount)
+                        summary_sheet.cell(row=row_idx, column=2, value="-" if employee_untaxed == 0 else employee_untaxed)
+                        summary_sheet.cell(row=row_idx, column=3, value="-" if employee_tax == 0 else employee_tax)
+                        summary_sheet.cell(row=row_idx, column=4, value="-" if other_untaxed == 0 else other_untaxed)
+                        summary_sheet.cell(row=row_idx, column=5, value="-" if other_tax == 0 else other_tax)
+                        summary_sheet.cell(row=row_idx, column=6, value="-" if total_row_amount == 0 else total_row_amount)
+                        
+                        # 设置单元格样式
+                        for col in range(1, 7):
+                            cell = summary_sheet.cell(row=row_idx, column=col)
+                            if col > 1:  # 数字列设置数字格式
+                                cell.number_format = '#,##0.00'
+                                cell.alignment = Alignment(horizontal='right', vertical='center')
+                            else:  # 品类列左对齐
+                                cell.alignment = Alignment(horizontal='left', vertical='center')
+                            
+                            # 添加边框
+                            thin_border = Border(
+                                left=Side(style='thin'),
+                                right=Side(style='thin'),
+                                top=Side(style='thin'),
+                                bottom=Side(style='thin')
+                            )
+                            cell.border = thin_border
                         
                         row_idx += 1
-                    
-                    # 员工餐厅小计
-                    summary_sheet.cell(row=row_idx, column=1, value="员工餐厅小计")
+                        
+                    # 添加总计行
+                    summary_sheet.cell(row=row_idx, column=1, value="合计")
                     summary_sheet.cell(row=row_idx, column=2, value="-" if total_employee_untaxed == 0 else total_employee_untaxed)
                     summary_sheet.cell(row=row_idx, column=3, value="-" if total_employee_tax == 0 else total_employee_tax)
-                    summary_sheet.cell(row=row_idx, column=4, value="-" if (total_employee_untaxed + total_employee_tax) == 0 else (total_employee_untaxed + total_employee_tax))
+                    summary_sheet.cell(row=row_idx, column=4, value="-" if total_other_untaxed == 0 else total_other_untaxed)
+                    summary_sheet.cell(row=row_idx, column=5, value="-" if total_other_tax == 0 else total_other_tax)
                     
-                    # 设置小计行样式
-                    subtotal_fill = PatternFill(start_color="E6F2FF", end_color="E6F2FF", fill_type="solid")
-                    for col in range(1, 5):
-                        cell = summary_sheet.cell(row=row_idx, column=col)
-                        cell.font = Font(bold=True)
-                        cell.fill = subtotal_fill
-                        # 为小计行添加底部双边框
-                        if col == 1:
-                            cell.alignment = Alignment(horizontal='left', vertical='center')
-                        else:
-                            cell.alignment = Alignment(horizontal='right', vertical='center')
-                            cell.number_format = '#,##0.00'
-                    
-                    row_idx += 2  # 空一行
-                    
-                    # 其他餐厅（营业点）标题
-                    summary_sheet.cell(row=row_idx, column=1, value="其他餐厅（非员餐）")
-                    summary_sheet.cell(row=row_idx, column=1).font = Font(bold=True)
-                    row_idx += 1
-                    
-                    # 其他餐厅（营业点）分类汇总
-                    for category in ordered_categories:
-                        # 筛选该分类的其他餐厅（营业点）数据
-                        category_df = df[(df[classification_column] == category) & 
-                                         (~df["部门"].isin(employee_restaurants))]
-                        
-                        # 计算未税金额和税额
-                        untaxed_amount = category_df["小计金额(结算)"].sum() if not category_df.empty else 0
-                        tax_amount = category_df["税额(结算)"].sum() if not category_df.empty else 0
-                        total_amount = untaxed_amount + tax_amount
-                        
-                        # 更新其他餐厅（营业点）总计
-                        total_other_untaxed += untaxed_amount
-                        total_other_tax += tax_amount
-                        
-                        # 写入汇总数据
-                        summary_sheet.cell(row=row_idx, column=1, value=category)
-                        summary_sheet.cell(row=row_idx, column=2, value="-" if untaxed_amount == 0 else untaxed_amount)
-                        summary_sheet.cell(row=row_idx, column=3, value="-" if tax_amount == 0 else tax_amount)
-                        summary_sheet.cell(row=row_idx, column=4, value="-" if total_amount == 0 else total_amount)
-                        
-                        row_idx += 1
-                    
-                    # 其他餐厅（营业点）小计
-                    summary_sheet.cell(row=row_idx, column=1, value="其他餐厅（非员餐）小计")
-                    summary_sheet.cell(row=row_idx, column=2, value="-" if total_other_untaxed == 0 else total_other_untaxed)
-                    summary_sheet.cell(row=row_idx, column=3, value="-" if total_other_tax == 0 else total_other_tax)
-                    summary_sheet.cell(row=row_idx, column=4, value="-" if (total_other_untaxed + total_other_tax) == 0 else (total_other_untaxed + total_other_tax))
-                    
-                    # 设置小计行样式
-                    for col in range(1, 5):
-                        cell = summary_sheet.cell(row=row_idx, column=col)
-                        cell.font = Font(bold=True)
-                        cell.fill = subtotal_fill
-                        if col == 1:
-                            cell.alignment = Alignment(horizontal='left', vertical='center')
-                        else:
-                            cell.alignment = Alignment(horizontal='right', vertical='center')
-                            cell.number_format = '#,##0.00'
-                    
-                    row_idx += 2  # 空一行
-                    
-                    # 添加总计行
-                    total_untaxed = total_employee_untaxed + total_other_untaxed
-                    total_tax = total_employee_tax + total_other_tax
-                    
-                    summary_sheet.cell(row=row_idx, column=1, value="总计")
-                    summary_sheet.cell(row=row_idx, column=2, value="-" if total_untaxed == 0 else total_untaxed)
-                    summary_sheet.cell(row=row_idx, column=3, value="-" if total_tax == 0 else total_tax)
-                    summary_sheet.cell(row=row_idx, column=4, value="-" if (total_untaxed + total_tax) == 0 else (total_untaxed + total_tax))
+                    # 计算总金额
+                    total_amount = total_employee_untaxed + total_employee_tax + total_other_untaxed + total_other_tax
+                    summary_sheet.cell(row=row_idx, column=6, value="-" if total_amount == 0 else total_amount)
                     
                     # 设置总计行样式
                     total_fill = PatternFill(start_color="BDD7EE", end_color="BDD7EE", fill_type="solid")
-                    for col in range(1, 5):
+                    for col in range(1, 7):
                         cell = summary_sheet.cell(row=row_idx, column=col)
                         cell.font = Font(bold=True, size=12)
                         cell.fill = total_fill
@@ -677,12 +730,12 @@ class ProductClassificationApp:
                             cell.alignment = Alignment(horizontal='right', vertical='center')
                             cell.number_format = '#,##0.00'
                     
-                    # 读取总计行的第4列（总金额）并转换为中文大写写入B9单元格
+                    # 读取总计行的第6列（总金额）并转换为中文大写写入B9单元格
                     try:
-                        total_amount = summary_sheet.cell(row=row_idx, column=4).value
+                        # total_amount已在前面计算
                         if total_amount is not None:
-                            # 转换为中文大写
-                            chinese_amount = num_to_chinese(total_amount) + "元"
+                            # 转换为中文大写（函数内部已添加"圆"字）
+                            chinese_amount = num_to_chinese(total_amount)
                             # 转换为小写
                             lowercase_amount = f"{total_amount:.2f}元"
                             # 写入B9单元格（含税总金额人民币大写）
@@ -699,27 +752,27 @@ class ProductClassificationApp:
                         except:
                             pass
                     
-                    # 读取B33和C33单元格数据并写入B10和B11单元格
+                    # 读取总计行的数据并写入B10和B11单元格
                     try:
-                        # 假设总计行是第33行，读取B33和C33单元格的数据
-                        b33_value = summary_sheet.cell(row=33, column=2).value
-                        c33_value = summary_sheet.cell(row=33, column=3).value
+                        # 使用当前总计行的数据
+                        total_untaxed = total_employee_untaxed + total_other_untaxed
+                        total_tax = total_employee_tax + total_other_tax
                         
-                        if b33_value is not None:
+                        if total_untaxed is not None:
                             # 写入B10单元格，前面加上"小写"，后面加上"元"
-                            summary_sheet.cell(row=10, column=2, value=f"小写{b33_value:.2f}元")
-                            self.log_message(f"已将B33单元格数据 {b33_value} 写入B10单元格")
+                            summary_sheet.cell(row=10, column=2, value=f"小写{total_untaxed:.2f}元")
+                            self.log_message(f"已将未税总金额 {total_untaxed} 写入B10单元格")
                         else:
-                            self.log_message("B33单元格数据为空，无法写入B10单元格")
+                            self.log_message("未税总金额为空，无法写入B10单元格")
                             
-                        if c33_value is not None:
+                        if total_tax is not None:
                             # 写入B11单元格，前面加上"小写"，后面加上"元"
-                            summary_sheet.cell(row=11, column=2, value=f"小写{c33_value:.2f}元")
-                            self.log_message(f"已将C33单元格数据 {c33_value} 写入B11单元格")
+                            summary_sheet.cell(row=11, column=2, value=f"小写{total_tax:.2f}元")
+                            self.log_message(f"已将税额总金额 {total_tax} 写入B11单元格")
                         else:
-                            self.log_message("C33单元格数据为空，无法写入B11单元格")
+                            self.log_message("税额总金额为空，无法写入B11单元格")
                     except Exception as e:
-                        self.log_message(f"读取B33和C33单元格数据并写入B10和B11单元格时出错: {str(e)}")
+                        self.log_message(f"读取总计行数据并写入B10和B11单元格时出错: {str(e)}")
                         # 如果出错，记录错误但继续执行
                     
                     # 读取Statement sheet中的A列年月数据并转换格式写入B12单元格
@@ -779,16 +832,17 @@ class ProductClassificationApp:
                         # 如果出错，记录错误但继续执行
                     
                     # 调整列宽
-                    summary_sheet.column_dimensions["A"].width = 47
-                    summary_sheet.column_dimensions["B"].width = 23
-                    summary_sheet.column_dimensions["C"].width = 15
-                    summary_sheet.column_dimensions["D"].width = 15
-                    
-                    # 在A35单元格开始插入备注文字
-                    summary_sheet.cell(row=35, column=1, value="备注：")
-                    summary_sheet.cell(row=35, column=1).font = Font(bold=True)
-                    # 合并A35-D35单元格
-                    summary_sheet.merge_cells(start_row=35, start_column=1, end_row=35, end_column=4)
+                    summary_sheet.column_dimensions["A"].width = 28
+                    summary_sheet.column_dimensions["B"].width = 15
+                    summary_sheet.column_dimensions["C"].width = 12
+                    summary_sheet.column_dimensions["D"].width = 12
+                    summary_sheet.column_dimensions["E"].width = 12
+                    summary_sheet.column_dimensions["F"].width = 20
+                    # 在A25单元格开始插入备注文字
+                    summary_sheet.cell(row=25, column=1, value="备注：")
+                    summary_sheet.cell(row=25, column=1).font = Font(bold=True)
+                    # 合并A25-F25单元格
+                    summary_sheet.merge_cells(start_row=25, start_column=1, end_row=25, end_column=6)
                     
                     # 设置备注文字的样式
                     remark_font = Font(size=11)
@@ -808,37 +862,39 @@ class ProductClassificationApp:
                     ]
                     
                     for i, remark in enumerate(remarks):
-                        cell = summary_sheet.cell(row=36+i, column=1, value=remark)
+                        cell = summary_sheet.cell(row=26+i, column=1, value=remark)
                         cell.font = remark_font
                         cell.alignment = remark_alignment
-                        # 合并每行的A至D列，但跳过第42行（36+6）
-                        if 36+i != 42:
-                            summary_sheet.merge_cells(start_row=36+i, start_column=1, end_row=36+i, end_column=4)
+                        # 合并每行的A至F列，但跳过第32行（26+6）
+                        if 26+i != 32:
+                            summary_sheet.merge_cells(start_row=26+i, start_column=1, end_row=26+i, end_column=6)
                     
-                    # 在B43单元格中添加邮箱地址
-                    email_cell = summary_sheet.cell(row=42, column=2, value=email_address)
+                    # 在B32单元格中添加邮箱地址
+                    email_cell = summary_sheet.cell(row=32, column=2, value=email_address)
                     email_cell.font = remark_font
                     email_cell.alignment = remark_alignment
                     
-                    # 在第46行A列插入供应商确认日期文字
+                    # 在第36行A列插入供应商确认日期文字
                     date_font = Font(size=11)
                     date_alignment = Alignment(horizontal='left', vertical='center')
                     
-                    date_cell = summary_sheet.cell(row=46, column=1, value="供应商确认日期：_______年_______月_______日")
+                    date_cell = summary_sheet.cell(row=36, column=1, value="供应商确认日期：_______年_______月_______日")
                     date_cell.font = date_font
                     date_cell.alignment = date_alignment
-                    # 合并第46行的A至D列
-                    summary_sheet.merge_cells(start_row=46, start_column=1, end_row=46, end_column=4)
+                    # 合并供应商确认日期行的A至F列
+                    summary_sheet.merge_cells(start_row=36, start_column=1, end_row=36, end_column=6)
+                    # 合并第39行的A至F列
+                    summary_sheet.merge_cells(start_row=39, start_column=1, end_row=39, end_column=6)
                     
-                    # 在第48行插入供应商盖章确认文字
+                    # 在第38行插入供应商盖章确认文字
                     stamp_font = Font(size=13, underline="single")
                     stamp_alignment = Alignment(horizontal='center', vertical='center')
                     
-                    stamp_cell = summary_sheet.cell(row=49, column=1, value="供应商盖章确认")
+                    stamp_cell = summary_sheet.cell(row=39, column=1, value="供应商盖章确认")
                     stamp_cell.font = stamp_font
                     stamp_cell.alignment = stamp_alignment
-                    # 合并第48行的A至D列
-                    summary_sheet.merge_cells(start_row=49, start_column=1, end_row=49, end_column=4)
+                    # 合并第39行的A至F列
+                    summary_sheet.merge_cells(start_row=39, start_column=1, end_row=39, end_column=6)
                     
                     # 设置所有数据单元格的边框和对齐方式
                     from openpyxl.styles import Border, Side
@@ -883,6 +939,27 @@ class ProductClassificationApp:
                     summary_sheet.title = "确认函"
                     self.log_message(f"已将汇总sheet更名为确认函")
                     
+                    # 重新设置第14行和第15行居中对齐，浅蓝色背景色
+                    light_blue_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
+                    for row in range(14, 16):
+                        for col in range(1, 7):
+                            cell = summary_sheet.cell(row=row, column=col)
+                            cell.alignment = Alignment(horizontal='center', vertical='center')
+                            cell.fill = light_blue_fill
+                    self.log_message(f"已重新设置第14行和第15行居中对齐，浅蓝色背景色")
+                    
+                    # 设置第2行到第12行无背景色
+                    for row in range(2, 13):
+                        for col in range(1, 7):
+                            cell = summary_sheet.cell(row=row, column=col)
+                            cell.fill = PatternFill(fill_type=None)
+                    self.log_message(f"已设置第2行到第12行无背景色")
+                    
+                    # 设置第2行、第5行、第8行和第13行的行高为30
+                    for row_num in [2, 5, 8, 13]:
+                        summary_sheet.row_dimensions[row_num].height = 30
+                    self.log_message(f"已设置第2行、第5行、第8行和第13行的行高为30")
+                    
                     # 保存文件
                     wb.save(output_file)
                     if self.edit_in_place_var.get():
@@ -901,7 +978,7 @@ class ProductClassificationApp:
                         self.log_message(f"已使用标准方式保存文件到: {output_file}")
             except Exception as e:
                 self.log_message(f"保存文件时出错: {str(e)}")
-                return
+                return False
             
             if self.edit_in_place_var.get():
                 self.log_message(f"分类完成，已直接修改原文件")
@@ -985,7 +1062,7 @@ class ProductClassificationApp:
                 self.log_message(f"  总金额: {total_amount:.2f}")
             
             # 其他餐厅（营业点）小计
-            self.log_message("\n其他餐厅（非员餐）小计:")
+            self.log_message("\n其他餐厅（营业点）小计:")
             self.log_message(f"未税金额: {total_other_untaxed:.2f}")
             self.log_message(f"税额: {total_other_tax:.2f}")
             self.log_message(f"总金额: {(total_other_untaxed + total_other_tax):.2f}")
@@ -1002,7 +1079,6 @@ class ProductClassificationApp:
             # 如果是批处理模式，直接返回成功
             if is_batch:
                 return True
-                
             # 非批处理模式下，询问用户是否打开文件夹
             message = "文件处理完成，" + ("已直接修改原文件" if self.edit_in_place_var.get() else f"已保存到:\n{output_file}")
             if messagebox.askyesno("处理完成", f"{message}\n\n是否打开文件所在文件夹？"):
@@ -1042,7 +1118,7 @@ class ProductClassificationApp:
         
         developer_label = ttk.Label(
             developer_frame,
-            text="Powered By Cayman Fu @ Sofitel HAIKOU 2025 Ver 2.0.1",
+            text="Powered By Cayman Fu @ Sofitel HAIKOU 2025 Ver 2.0",
             font=("微软雅黑", 8),
             foreground="gray"
         )
