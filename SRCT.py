@@ -465,7 +465,7 @@ class ProductClassificationApp:
                     summary_sheet.page_setup.horizontalCentered = True
                     
                     # 设置汇总sheet的标题
-                    summary_sheet.cell(row=1, column=1, value="供应商对账确认函工具")
+                    summary_sheet.cell(row=1, column=1, value="供应商对账确认函")
                     summary_sheet.cell(row=1, column=1).font = Font(bold=True, size=16)
                     summary_sheet.cell(row=1, column=1).alignment = Alignment(horizontal='center', vertical='center')
                     # 合并标题单元格
