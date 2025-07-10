@@ -1,12 +1,12 @@
-name: Build bld_Reconciliation_Tkinter EXE
+name: Build Supplier-Reconciliation-Confirmation-Tool EXE
  
 on:
   push:
     paths:
-      - '**/*UI.py'  # 匹配所有 Python 文件的更改
+      - '**/*.py'  # 匹配所有 Python 文件的更改
   pull_request:
     paths:
-      - '**/*UI.py'  # 匹配所有 Python 文件的更改
+      - '**/*.py'  # 匹配所有 Python 文件的更改
 
  
 jobs:
