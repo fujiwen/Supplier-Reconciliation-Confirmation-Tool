@@ -36,4 +36,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Supplier_Recon_Confirmation_Tool
-        path: dist/SRCT.exe
+        path: Product_Classification_Tool.exe
