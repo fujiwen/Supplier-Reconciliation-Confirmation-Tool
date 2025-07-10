@@ -28,7 +28,7 @@ jobs:
       run: pip install pandas numpy openpyxl xlrd 
  
     - name: Build EXE
-      run: pyinstaller --noconsole --icon=favicon.ico --onefile Product_Classification_Tool.py
+      run: pyinstaller --noconsole --icon=favicon.ico --onefile SRCT.py
       env:
         CC: mingw32-gcc
  
@@ -36,4 +36,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Supplier_Recon_Confirmation_Tool
-        path: Product_Classification_Tool.exe
+        path: dist/SRCT.exe
