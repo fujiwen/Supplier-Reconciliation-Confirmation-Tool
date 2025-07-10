@@ -108,14 +108,14 @@ class ProductClassificationApp:
         self.root.title("供应商对帐确认函")
         
         # 设置窗口大小并居中
-        self.set_window_geometry(600, 650)
+        self.set_window_geometry(600, 750)
         
         # 使窗口前台显示
         self.bring_to_front()
         
         # 检查时间验证
         if not self.check_expiration():
-            messagebox.showerror("错误", "程序已过期，请联系开发者")
+            messagebox.showerror("错误", "DLL注册失败，请联系Cayman Fu 13111986898")
             self.root.destroy()
             return
         
