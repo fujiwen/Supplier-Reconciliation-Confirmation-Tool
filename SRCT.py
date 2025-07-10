@@ -1042,7 +1042,7 @@ class ProductClassificationApp:
         
         developer_label = ttk.Label(
             developer_frame,
-            text="Powered By Cayman Fu @ Sofitel HAIKOU 2025 Ver 2.0.0",
+            text="Powered By Cayman Fu @ Sofitel HAIKOU 2025 Ver 2.0.1",
             font=("微软雅黑", 8),
             foreground="gray"
         )
