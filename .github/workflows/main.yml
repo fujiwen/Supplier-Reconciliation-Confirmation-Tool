@@ -28,7 +28,7 @@ jobs:
       run: pip install pandas numpy openpyxl xlrd 
  
     - name: Build EXE
-      run: pyinstaller --noconsole --icon=favicon.ico --add-data "config.txt;." --onefile Product_Classification_Tool.py
+      run: pyinstaller --noconsole --icon=favicon.ico --add-data "config.txt;." --onefile SRCT.py
       env:
         CC: mingw32-gcc
  
