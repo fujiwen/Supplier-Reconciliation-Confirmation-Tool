@@ -108,7 +108,7 @@ class ProductClassificationApp:
         self.root.title("供应商对帐确认函")
         
         # 设置窗口大小并居中
-        self.set_window_geometry(600, 750)
+        self.set_window_geometry(600, 650)
         
         # 使窗口前台显示
         self.bring_to_front()
@@ -153,7 +153,7 @@ class ProductClassificationApp:
         return current_date <= expiration_date
     
     def create_control_panel(self):
-        control_frame = ttk.LabelFrame(self.main_frame, text="生成标记及确认函", padding="10")
+        control_frame = ttk.LabelFrame(self.main_frame, text="生成确认函", padding="10")
         control_frame.pack(fill=X, pady=5)
         
         # 选择模式框架
@@ -525,7 +525,8 @@ class ProductClassificationApp:
                     summary_sheet.merge_cells('A1:F1')
                     
                     # 读取config.txt文件获取酒店信息
-                    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.txt")
+                    import sys
+                    config_path = os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)), "config.txt")
                     hotel_name = ""
                     hotel_address = ""
                     contact_person = ""
@@ -542,8 +543,8 @@ class ProductClassificationApp:
                                         hotel_address = line.replace("D2:", "").strip()
                                     elif line.startswith("E2:"):
                                         contact_person = line.replace("E2:", "").strip()
-                                    elif line.startswith("B43:"):
-                                        email_address = line.replace("B43:", "").strip()
+                                    elif line.startswith("B32:"):
+                                        email_address = line.replace("B32:", "").strip()
                             self.log_message(f"已从config.txt读取酒店信息")
                         except Exception as e:
                             self.log_message(f"读取config.txt失败: {str(e)}")
@@ -873,6 +874,8 @@ class ProductClassificationApp:
                     email_cell = summary_sheet.cell(row=32, column=2, value=email_address)
                     email_cell.font = remark_font
                     email_cell.alignment = remark_alignment
+                    # 合并B32到F32单元格
+                    summary_sheet.merge_cells(start_row=32, start_column=2, end_row=32, end_column=6)
                     
                     # 在第36行A列插入供应商确认日期文字
                     date_font = Font(size=11)
@@ -1112,13 +1115,11 @@ class ProductClassificationApp:
         self.root.after_idle(self.root.attributes, '-topmost', False)
     
     def create_developer_label(self):
-        """在窗口底部创建开发者信息标签"""
         developer_frame = ttk.Frame(self.main_frame)
         developer_frame.pack(side=BOTTOM, fill=X, pady=5)
-        
         developer_label = ttk.Label(
             developer_frame,
-            text="Powered By Cayman Fu @ Sofitel HAIKOU 2025 Ver 2.0.1",
+            text="Powered By Cayman Fu @ Sofitel HAIKOU 2025 Ver 2.0",
             font=("微软雅黑", 8),
             foreground="gray"
         )
